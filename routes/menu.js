@@ -81,7 +81,7 @@ router.get("/menu", async(req, res) => {
 });
 
 //DELETE
-router.delete("/user", (req, res) => {
+router.delete("/menu", (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});

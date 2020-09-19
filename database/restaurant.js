@@ -2,36 +2,52 @@ var mongoose = require("./connect");
 var USERSCHEMA = new mongoose.Schema({
     nombre:{
         type: String,
-        required: [true, "el nombre del restaurante es necesario"]
+        required: [true, "el nombre de la comida es necesario"]  
     },
-    nit: {
-        type: Number,
-        required: [true, "El nit es necesario"]
+    nit:{
+        type: Number     
     },
     propietario:{
-        type: String,
-        required:[true, "el nombre del propietario es necesario"]
-    },
-    calle: {
-        type: String,
-        required: [true, "La direccion es requerida"]
-    },
-    telefono: {
         type: String
     },
-
-    //Varible Log ---->FALTA QUE ES<---------
-    //Varible Lat ---->FALTA QUE ES<---------
-    //Varible Logo ---->tipo de archivo imagen<---------
-
-    fechaderegistro: {
+    calle:{
+        type: String
+    },
+    telefono:{
+        type: Number
+    },
+    lat:{
+        type: Array
+    },
+    lng:{
+        type: Array
+    },
+    fecha: {
         type: Date,
         default: new Date()
+    },
+    logo: {
+        type: String,
+        required: [true, "la ruta de la imagen es necesaria"]
+    },
+    hash1: {
+        type: String,
+        required: [true, "la ruta de la imagen es necesaria"]
+    },
+    relativepath1: {
+        type: String
+    },
+    fotoLugar: {
+        type: String,
+        required: [true, "la ruta de la imagen es necesaria"]
+    },
+    hash2: {
+        type: String,
+        required: [true, "la ruta de la imagen es necesaria"]
+    },
+    relativepath2: {
+        type: String
     }
-
-    ////Varible FotoLugar ---->tipo de archivo imagen<---------
-
-});
-
+});     
 var USER = mongoose.model("restaurante", USERSCHEMA);
-module.exports = USER;
+module.exports = USER 

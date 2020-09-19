@@ -1,75 +1,175 @@
 var express = require('express');
+var sha1 = require('sha1');
 var router = express.Router();
+var fileupload = require('express-fileupload')
 var USER  = require("../database/restaurant");
-
-/* GET */
-router.get('/restaurant',(req, res, next) => {
-  USER.find({}, (err, docs) => {
-    res.status(200).json(docs);
+router.use(fileupload({
+    fileSize: 50 * 1024 * 1024
+}));
+//POST
+router.post("/restaurante", (req, res) => {
+  var Logo = req.files.logo;
+  var FotoLugar = req.files.fotoLugar;
+  var path1 = __dirname.replace(/\/routes/g, "/Imagenes/Restaurant/Logo");
+  var path2 = __dirname.replace(/\/routes/g, "/Imagenes/Restaurant/Lugar");
+  var date = new Date();
+  var sing  = sha1(date.toString()).substr(1, 5);
+  var totalpath1 = path1 + "/" + sing + "_" + Logo.name.replace(/\s/g,"_");
+  var totalpath2 = path2 + "/" + sing + "_" + FotoLugar.name.replace(/\s/g,"_");
+  Logo.mv(totalpath1, async(err) => {
+        if (err) {
+            return res.status(500).send({msn : "Error al escribir el archivo en el disco duro"});
+        }
+  });
+  FotoLugar.mv(totalpath2, async(err) => {
+        if (err) {
+            return res.status(500).send({msn : "Error al escribir el archivo en el disco duro"});
+        }
+  });
+  var datos = req.body;
+  var obj = {};
+  obj["nombre"] = datos.nombre;
+  obj["nit"] = datos.nit;
+  obj["propietario"] = datos.propietario;
+  obj["calle"] = datos.calle;
+  obj["telefono"] = datos.telefono;
+  obj["lat"] = datos.lat;
+  obj["lng"] = datos.lng;
+  obj["fecha"] = datos.fecha;
+  obj["logo"] = totalpath1;
+  obj["hash1"] = sha1(totalpath1);
+  obj["relativepath1"] = "/api/1.0/logo/?id=" + obj["hash1"];
+  obj["fotoLugar"] = totalpath2;
+  obj["hash2"] = sha1(totalpath2);
+  obj["relativepath2"] = "/api/1.0/fotoLugar/?id=" + obj["hash2"]
+  var restaurant = new USER(obj);
+  restaurant.save((err, docs) => {
+    if (err) {
+         res.status(500).json({msn: "ERROR "})
+           return;
+    }
+    res.status(200).json({msn: "Restaurante Registrado"}); 
   });
 });
-
-
-//POST
- router.post("/restaurant", (req, res) => {
-  var datos=req.body;
-
-  var user={};
-  user["nombre"]=datos.nombre;
-  user["nit"]=datos.nit;
-  user["propietario"]=datos.propietario;
-  user["calle"]=datos.calle;
-  user["telefono"]=datos.telefono;
-  var guardando=new USER(user);  //-->variable para guardar en la base de datos
-  guardando.save().then(() => {  //-->guardando
-    res.status(200).json({msn: "Usuario Registrado"});
-  });
- });
-
- router.put("/restaurant",async(req, res) => {
-  var params = req.query;
-  var bodydata = req.body;
-  if(params.id == null){
-    res.status(300).json({msn:"El id es necesario "});
-    return;
-  }
-  var allowkeylist = ["nombre", "nit", "calle" , "telefono"]
-  var keys = Object.keys(bodydata);
-  var updateobjectdata ={};
-  for(var i=0; i<keys.length; i++){
-  if(allowkeylist.indexOf(keys[1]> -1)){
-    updateobjectdata[keys[i]] = bodydata[keys[i]];
-   }
-  }
-    USER.update({ _id: params.id}, {$set: bodydata},  (err, docs)=> {
-    if(err){
-      res.status(500).json({msn: "existen problemas en la base de datos"});
-      return;
+//GET
+router.get("/restaurante", async(req, res) => {
+    var filterdata = req.query;
+    var filterarray = ["nombre","nit","calle"];
+    var nombre = filterdata["nombre"];
+    var nit = filterdata["nit"];
+    var calle = filterdata["calle"];
+    var filter = {};
+    if (nombre != null) {
+        filter["nombre"] = new RegExp(nombre, "g");
     }
+    if (nit != null) {
+        filter["nit"] = nit;
+    }
+    if (calle != null) {
+        filter["calle"] = calle;
+    }
+    var limit = 100;
+    var skip = 0;
+    if (filterdata["limit"]) {
+        limit = parseInt(filterdata["limit"]);
+    }
+    if (filterdata["skip"]) {
+        skip = parseInt(filterdata["skip"]);
+    }
+    var docs = await USER.find(filter).limit(limit).skip(skip);
     res.status(200).json(docs);
-   });  
-
- });
-
- //DELETE  --->falta     <-------solo es un ejemplo
- router.delete("/restaurant", (req, res) => {
-  var params = req.query;
-  if(params,id == null){
-    res.status(300).json({msn: "el id es necesario"});
-    return; 
-  }
-  USER.remove({_id: params.id}, (err, docs)=> {
-  if(err){
-  res.status(500).json({msn: "existe problemas en la base de datos"});
-    return; 
-   }   
-  res.status(200).json(docs);
-     });
- });
-
-
- //PATCH  --->falta <-------
- router.patch("/restaurant", (req, res) => {
-
- });
+});
+router.get("/logo", async(req, res, next) => {
+    var params = req.query;
+    if (params == null) {
+        res.status(300).json({ msn: "Error es necesario un ID"});
+        return;
+    }
+    var nit = params.nit;
+    var restaurante =  await USER.find({hash1: nit});
+    if (restaurante.length > 0) {
+        var path = restaurante[0].logo;
+        res.sendFile(path);
+        return;
+    }
+    res.status(300).json({
+        msn: "Error en la petición"
+    });
+    return;
+});
+router.get("/fotoLugar", async(req, res, next) => {
+    var params = req.query;
+    if (params == null) {
+        res.status(300).json({ msn: "Error es necesario un ID"});
+        return;
+    }
+    var nit = params.nit;
+    var restaurante =  await USER.find({hash2: nit});
+    if (restaurante.length > 0) {
+        var path = restaurante[0].fotoLugar;
+        res.sendFile(path);
+        return;
+    }
+    res.status(300).json({
+        msn: "Error en la petición"
+    });
+    return;
+});
+//PUT
+router.put("/restaurante", async(req, res) => {
+    var params = req.query;
+    var bodydata = req.body;
+    if (params.nit == null) {
+        res.status(300).json({msn: "El parámetro NIT es necesario"});
+        return;
+    }
+    var allowkeylist = ["nombre","propietario","calle","telefono","lat","lng"];
+    var keys = Object.keys(bodydata);
+    var updateobjectdata = {};
+    for (var i = 0; i < keys.length; i++) {
+        if (allowkeylist.indexOf(keys[i]) > -1) {
+            updateobjectdata[keys[i]] = bodydata[keys[i]];
+        }
+    }
+    USER.update({nit:  params.nit}, {$set: updateobjectdata}, (err, docs) => {
+       if (err) {
+           res.status(500).json({msn: "Existen problemas en la base de datos"});
+            return;
+        } 
+       res.status(200).json(docs);
+       return;
+    });
+});
+//PATCH ->Solo por elementos
+router.patch("/restaurante", async(req, res) => {
+    var params = req.query;
+    var bodydata = req.body;
+    if (params.nit == null) {
+        res.status(300).json({msn: "El parámetro NIT es necesario"});
+        return;
+    }
+    USER.update({nit:  params.nit}, bodydata, (err, docs) => {
+       if (err) {
+           res.status(500).json({msn: "Existen problemas en la base de datos"});
+            return;
+        } 
+       res.status(200).json(docs);
+       return;
+    });
+});
+//DELETE
+router.delete("/restaurante", (req, res) => {
+    var params = req.query;
+    if (params.nit == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
+        return;
+    }
+    USER.remove({nit: params.nit}, (err, docs) => {
+        if (err) {
+            res.status(500).json({msn: "Existen problemas en la base de datos"});
+             return;
+         } 
+         res.status(200).json(docs);
+    });
+});
 module.exports = router

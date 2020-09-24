@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var USER  = require("../database/orden");
+//https://carlosazaustre.es/como-relacionar-tus-modelos-en-mongodb necesito esto para despues
 
 /* GET */
 router.get('/ordenes',(req, res, next) => {

@@ -1,5 +1,7 @@
 var mongoose = require("./connect");
-var USERSCHEMA = new mongoose.Schema({
+const Schema = mongoose.Schema;
+
+var menusSchema = Schema({
     nombre:{
         type: String,
         default: "None data",
@@ -29,5 +31,5 @@ var USERSCHEMA = new mongoose.Schema({
     
 });
 
-var USER = mongoose.model("menu", USERSCHEMA);
-module.exports = USER;
+var menus = mongoose.model("Menus", menusSchema);
+module.exports = menus;

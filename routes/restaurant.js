@@ -2,7 +2,7 @@ var express = require('express');
 var sha1 = require('sha1');
 var router = express.Router();
 var fileupload = require('express-fileupload')
-var USER  = require("../database/restaurant");
+var Restaurant  = require("../database/restaurant");
 router.use(fileupload({
     fileSize: 50 * 1024 * 1024
 }));
@@ -42,7 +42,7 @@ router.post("/restaurante", (req, res) => {
   obj["fotoLugar"] = totalpath2;
   obj["hash2"] = sha1(totalpath2);
   obj["relativepath2"] = "/api/1.0/fotoLugar/?id=" + obj["hash2"]
-  var restaurant = new USER(obj);
+  var restaurant = new Restaurant(obj);
   restaurant.save((err, docs) => {
     if (err) {
          res.status(500).json({msn: "ERROR "})
@@ -76,7 +76,7 @@ router.get("/restaurante", async(req, res) => {
     if (filterdata["skip"]) {
         skip = parseInt(filterdata["skip"]);
     }
-    var docs = await USER.find(filter).limit(limit).skip(skip);
+    var docs = await Restaurant.find(filter).limit(limit).skip(skip);
     res.status(200).json(docs);
 });
 router.get("/logo", async(req, res, next) => {
@@ -86,7 +86,7 @@ router.get("/logo", async(req, res, next) => {
         return;
     }
     var nit = params.nit;
-    var restaurante =  await USER.find({hash1: nit});
+    var restaurante =  await Restaurant.find({hash1: nit});
     if (restaurante.length > 0) {
         var path = restaurante[0].logo;
         res.sendFile(path);
@@ -104,7 +104,7 @@ router.get("/fotoLugar", async(req, res, next) => {
         return;
     }
     var nit = params.nit;
-    var restaurante =  await USER.find({hash2: nit});
+    var restaurante =  await Restaurant.find({hash2: nit});
     if (restaurante.length > 0) {
         var path = restaurante[0].fotoLugar;
         res.sendFile(path);
@@ -131,7 +131,7 @@ router.put("/restaurante", async(req, res) => {
             updateobjectdata[keys[i]] = bodydata[keys[i]];
         }
     }
-    USER.update({nit:  params.nit}, {$set: updateobjectdata}, (err, docs) => {
+    Restaurant.update({nit:  params.nit}, {$set: updateobjectdata}, (err, docs) => {
        if (err) {
            res.status(500).json({msn: "Existen problemas en la base de datos"});
             return;
@@ -142,13 +142,13 @@ router.put("/restaurante", async(req, res) => {
 });
 //PATCH ->Solo por elementos
 router.patch("/restaurante", async(req, res) => {
-    var params = req.query;
-    var bodydata = req.body;
-    if (params.nit == null) {
-        res.status(300).json({msn: "El parámetro NIT es necesario"});
+    if(req.query.id == null) {
+        res.status(300).json({msn: "Error no existe id"});
         return;
     }
-    USER.update({nit:  params.nit}, bodydata, (err, docs) => {
+    var id = req.query.id;
+    var params= req.body;
+    Restaurant.update({_id: id}, params, (err, docs) => {
        if (err) {
            res.status(500).json({msn: "Existen problemas en la base de datos"});
             return;
@@ -164,7 +164,7 @@ router.delete("/restaurante", (req, res) => {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    USER.remove({nit: params.nit}, (err, docs) => {
+    Restaurant.remove({nit: params.nit}, (err, docs) => {
         if (err) {
             res.status(500).json({msn: "Existen problemas en la base de datos"});
              return;

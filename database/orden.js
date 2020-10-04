@@ -1,35 +1,35 @@
 var mongoose = require("./connect");
-var USERSCHEMA = new mongoose.Schema({
-    idmenu:{
+const Schema = mongoose.Schema;
+
+var ordenSchema = new Schema({
+    menus : {
        type: Schema.Types.ObjectId,
-       ref: "menu"
+       ref: "Menus"
     },
-    idrestaurant: {
+    restaurant:{
        type: Schema.Types.ObjectId,
-       ref: "restaurante" 
+       ref: "Restaurant"
     },
     cantidad: {
-        type: Number
+       type: Number
     }, 
+    cliente: {
+       type: Schema.Types.ObjectId,
+       ref: "Cliente"
+    },
     precio: {
        type: Number
-    },/*
-    idcliente: {
-       type: Schema.Types.ObjectId,
-       ref: "cliente" 
-    },*/
-    lugardeenvio: [
-       lat:{
-        type: Array
-       },
-       lng:{
-        type: Array
-       },
-    ],
+    },
+    Fecha_Registro:
+    {
+      type:Date,
+      default: Date.now()
+
+    },
     pagototal: {
         type: Number
     },
 });
 
-var USER = mongoose.model("orden", USERSCHEMA);
-module.exports = USER;
+var orden = mongoose.model("Orden", ordenSchema);
+module.exports = orden;

@@ -2,7 +2,7 @@ var express = require('express');
 var sha1 = require('sha1');
 var router = express.Router();
 var fileupload = require('express-fileupload')
-var USER  = require("../database/menu");
+var Menus  = require("../database/menu");
 router.use(fileupload({
     fileSize: 50 * 1024 * 1024
 }));
@@ -23,11 +23,10 @@ router.post("/menu", (req, res) => {
         obj["nombre"] = datos.nombre;
         obj["precio"] = datos.precio;
         obj["descripcion"] = datos.descripcion;
-        obj["fecha"] = datos.fecha;
         obj["fotoProducto"] = totalpath;
         obj["hash"] = sha1(totalpath);
         obj["relativepath"] = "/api/1.0/getfile/?id=" + obj["hash"];
-        var menu = new USER(obj);
+        var menu = new Menus(obj);
         menu.save((err, docs) => {
             if (err) {
                 res.status(500).json({msn: "ERROR "})
@@ -45,7 +44,7 @@ router.get("/getfile", async(req, res, next) => {
         return;
     }
     var id = params.id;
-    var menu =  await USER.find({hash: id});
+    var menu =  await Menus.find({hash: id});
     if (menu.length > 0) {
         var path = menu[0].fotoProducto;
         res.sendFile(path);
@@ -76,7 +75,7 @@ router.get("/menu", async(req, res) => {
     if (filterdata["skip"]) {
         skip = parseInt(filterdata["skip"]);
     }
-    var docs = await USER.find(filter).limit(limit).skip(skip);
+    var docs = await Menus.find(filter).limit(limit).skip(skip);
     res.status(200).json(docs);
 });
 
@@ -87,7 +86,7 @@ router.delete("/menu", (req, res) => {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    USER.remove({_id: params.id}, (err, docs) => {
+    Menus.remove({_id: params.id}, (err, docs) => {
         if (err) {
             res.status(500).json({msn: "Existen problemas en la base de datos"});
              return;

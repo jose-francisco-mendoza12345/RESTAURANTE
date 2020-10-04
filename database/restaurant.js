@@ -1,5 +1,8 @@
 var mongoose = require("./connect");
-var USERSCHEMA = new mongoose.Schema({
+var mon = require('mongoose');
+var Schema = mon.Schema;
+
+var restaurantSchema = new Schema({
     nombre:{
         type: String,
         required: [true, "el nombre de la comida es necesario"]  
@@ -49,5 +52,5 @@ var USERSCHEMA = new mongoose.Schema({
         type: String
     }
 });     
-var USER = mongoose.model("restaurante", USERSCHEMA);
-module.exports = USER 
+var restaurant = mongoose.model("Restaurant", restaurantSchema);
+module.exports = restaurant;

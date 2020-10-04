@@ -1,7 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var USER  = require("../database/orden");
-
+var USER  = require("../database/menu");
+var USER  = require("../database/restaurant");
 /* GET */
 router.get('/ordenes',(req, res, next) => {
   USER.find({}, (err, docs) => {
@@ -11,17 +12,20 @@ router.get('/ordenes',(req, res, next) => {
 
 
 //POST
- router.post("/ordenes", (req, res) => {
-  var datos=req.body;
-
-  var user={};
-  user["cantidad"]=datos.cantidad;
-  user["lugardeenvio"]=datos.lugardeenvio;
-  var guardando=new USER(user);  //-->variable para guardar en la base de datos
-  guardando.save().then(() => {  //-->guardando
-    res.status(200).json({"mns" : "Usuario Registrado"});
+router.post("/orden",  (req, res) => { 
+  var datos = req.body;
+  var typemusic = datos.music.split(",");
+  var user = {};
+  user["cantidad"] = datos.cantidad;
+  user["precio"] = datos.precio;
+  user["lat"] = datos.lat;
+  user["lng"] = datos.lng;
+  user["pagototal"] = datos.pagototal ;
+  var newuser = new USER(user);
+  newuser.save().then(() => {
+    res.status(200).json({"msn" : "Usuario Registrado"});
   });
- });
+});
 
  //UPDATE  ---> falta   <-------
  router.put("/ordenes", async(req, res) => {

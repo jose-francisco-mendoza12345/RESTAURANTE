@@ -1,30 +1,34 @@
 var mongoose = require("./connect");
 var USERSCHEMA = new mongoose.Schema({
-    /*idmenu:{
-        type:
+    idmenu:{
+       type: Schema.Types.ObjectId,
+       ref: "menu"
     },
-    idrestorant: {
-        type:
+    idrestaurant: {
+       type: Schema.Types.ObjectId,
+       ref: "restaurante" 
     },
-    ****necesitamos hacer conexion con las id de las otras tablas*/
     cantidad: {
-        type: Number,
-        required: [true,"la cantida es requerida"]
-    },
-    /*
+        type: Number
+    }, 
+    precio: {
+       type: Number
+    },/*
     idcliente: {
-        type:
-    },
-    *****necesitamos hacer conexion con las id de las otras tablas*/
-    lugardeenvio: {
-        type: String,
-        required:[true,"latitud y longitud son necesarios"]
-    },
-    /*
+       type: Schema.Types.ObjectId,
+       ref: "cliente" 
+    },*/
+    lugardeenvio: [
+       lat:{
+        type: Array
+       },
+       lng:{
+        type: Array
+       },
+    ],
     pagototal: {
-        type:
+        type: Number
     },
-    necesitamos el valor de los precios para (precio * cantidad)*/
 });
 
 var USER = mongoose.model("orden", USERSCHEMA);

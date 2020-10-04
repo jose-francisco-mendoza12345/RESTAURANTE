@@ -4,7 +4,7 @@ var Orden  = require("../database/orden");
 
 //GET 
 router.get("/orden", (req, res, next) =>{
-  Orden.find({}).populate("menus").populate("restaurant").exec((error, docs) => {
+  Orden.find({}).populate("menus").populate("restaurant").populate("cliente").exec((error, docs) => {
     res.status(200).json(docs);
   });
 });
@@ -16,6 +16,7 @@ router.post("/orden",  (req, res) => {
   obj["menus"]=datos.menus;
   obj["restaurant"]=datos.restaurant;
   obj["cantidad"]=datos.cantidad;
+  obj["cliente"]=datos.cliente;
   obj["precio"]=datos.precio;
   obj["pagototal"]=datos.pagototal;
   var guardando=new Orden(obj);  

@@ -1,71 +1,59 @@
 var express = require("express");
 var router = express.Router();
-var USER = require("../database/user");
-//Lista de usuarios
-//CRUD
-router.get("/user", (req, res) => {
-    var filter = {};
-    var params = req.query;
-    var select = "";
-    var aux = {};
-    var order = {};
-    if (params.nick != null) {
-        var expresion = new RegExp(params.nick);
-        filter["nick"] = expresion;
-    }
-    if (params.filters != null) {
-        select = params.filters.replace(/,/g, " ");
-    }
-    if (params.agegt != null) {
-        var gt = parseInt(params.agegt);
-        aux["$gt"] =  gt;
-    }
-    if (params.agelt != null) {
-        var gl = parseInt(params.agelt);
-        aux["$lt"] =  gl;
-    }
-    if (aux != {}) {
-        filter["age"] = aux;
-    }
-    if (params.order != null) {
-        var data = params.order.split(",");
-        var number = parseInt(data[1]);
-        order[data[0]] = number;
-    }
-    USER.find(filter).
-    select(select).
-    sort(order).
-    exec((err, docs) => {
-        if (err) {
-            res.status(500).json({msn: "Error en el servidor"});
-            return;
-        }
-        res.status(200).json(docs);
-        return;
-    });
-});
-router.post("/user", (req, res) => {
-    var userRest = req.body;
-    var userDB = new USER(userRest);
-    userDB.save((err, docs) => {
-        if (err) {
-            var errors = err.errors;
-            var keys = Object.keys(errors);
-            var msn = {};
-            for (var i = 0; i < keys.length; i++) {
-                msn[keys[i]] = errors[keys[i]].message;
-            }
-            res.status(500).json(msn);
-            return;
-        }
-        res.status(200).json(docs);
-        return;
-    })
-});
-router.put("/user", (req, res) => {
+var Users = require("../database/users");
+var Cliente = require("../database/cliente");
+var jwt = require("jsonwebtoken");
 
+//POST
+router.post("/login", (req, res, next) => {
+  var email = req.body.email;
+  var password = req.body.password;
+  var result = Cliente.findOne({email: email,password: password}).exec((err, doc) => {
+    if (err) {
+      res.status(300).json({
+        msn : "No se puede concretar con la peticion "
+      });
+      return;
+    }
+    console.log(doc);
+    if (doc) {
+       console.log(result);
+      //res.status(200).json(doc);
+      jwt.sign({name: doc.email, password: doc.password}, "secretkey123", (err, token) => {
+          console.log(result);
+          res.status(200).json({
+            resp:200,
+            token : token,
+            dato:doc
+          });
+      })
+    } else {
+      res.status(400).json({
+        resp: 400,
+        msn : "El usuario no existe ne la base de datos"
+      });
+    }
+  });
 });
-router.delete("/user", (req, res) => {
-
-});
+//Middelware
+function verifytoken (req, res, next) {
+  //Recuperar el header
+  const header = req.headers["authorization"];
+  if (header  == undefined) {
+      res.status(403).json({
+        msn: "No autorizado"
+      })
+  } else {
+      req.token = header.split(" ")[1];
+      jwt.verify(req.token, "secretkey123", (err, authData) => {
+        if (err) {
+          res.status(403).json({
+            msn: "No autorizado"
+          })
+        } else {
+          next();
+        }
+      });
+  }
+}
 module.exports = router;

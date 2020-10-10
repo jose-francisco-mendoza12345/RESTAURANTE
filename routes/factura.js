@@ -197,49 +197,6 @@ router.get('/facturas/:id', function (req, res, next) {
     //doc.pipe(res.status(201));
 });
 
-
-/*const staticmap = require("staticmap");
-router.get('/maps', function (req, res, next) {
-    /*staticmap.getMap(staticmap.png({
-            width: 500,
-            height: 500
-        }), 45.4724, -73.4520, 12)
-        .then((image) => {
-            image.save('out1.png');
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-    staticmap.getBox(staticmap.png({
-            width: 500,
-            height: 500
-        }), 48.436034, 10.684891, 48.295985, 11.042633)
-        .then((image) => {
-            image.save('out2.png');
-        })
-        .catch((err) => {
-            console.log(err);
-        });*/
-
-    /*staticmap.getMap(staticmap.png({
-            width: 700,
-            height: 700,
-        }), -19.56604, -65.76899, 17)
-        .then((image) => {
-            //drawLine(x1, y1, x2, y2, color)
-            image.drawLine(340, 340, 360, 340, "#ffffff");
-            image.drawLine(340, 360, 360, 360, "#ffffff");
-            image.drawLine(340, 340, 340, 360, "#ffffff");
-            image.drawLine(360, 340, 360, 360, "#ffffff");
-            image.drawLine(340, 340, 360, 360, "#ffffff");
-            image.drawLine(360, 340, 340, 360, "#ffffff");
-            image.drawLine(0, 30, 350, 360, "#ffffff");
-            image.save('out2.png');
-        })
-        .catch((err) => {
-            console.log(err);
-        });
-});*/
 //insertar datos de] menu
 router.post("/detalle",  (req, res) => {
 
@@ -310,34 +267,6 @@ router.delete('/detalle/:id',  (req, res, )=> {
       });
 
 
-});
-//Actualizar solo x elementos
-router.patch(/pedidos\/[a-z0-9]{1,}$/, (req, res) => {
-  var url = req.url;
-  var id = url.split("/")[2];
-  var keys = Object.keys(req.body);
-  var pedidos = {};
-  for (var i = 0; i < keys.length; i++) {
-    pedidos[keys[i]] = req.body[keys[i]];
-  }
-  console.log(restaurant);
-  Pedidos.findOneAndUpdate({_id: id}, pedidos, (err, params) => {
-      if(err) {
-        res.status(500).json({
-          "msn": "Error no se pudo actualizar los datos"
-        });
-        return;
-      }
-      
-      res.status(200).json({
-        "resp": 200,
-        "dato": orden,
-        "msn" :  "orden  editado con exito"
-      });
-      return;
-    
-      });
-  });
 });
 
 module.exports = router;

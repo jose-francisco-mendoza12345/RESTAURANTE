@@ -10,15 +10,12 @@ router.post("/login", (req, res, next) => {
   var password = req.body.password;
   var result = Cliente.findOne({email: email,password: password}).exec((err, doc) => {
     if (err) {
-      res.status(300).json({
-        msn : "No se puede concretar con la peticion "
-      });
+      res.status(300).json({ msn : "No se puede concretar con la peticion" });
       return;
     }
     console.log(doc);
     if (doc) {
        console.log(result);
-      //res.status(200).json(doc);
       jwt.sign({name: doc.email, password: doc.password}, "secretkey123", (err, token) => {
           console.log(result);
           res.status(200).json({
@@ -28,10 +25,7 @@ router.post("/login", (req, res, next) => {
           });
       })
     } else {
-      res.status(400).json({
-        resp: 400,
-        msn : "El usuario no existe ne la base de datos"
-      });
+      res.status(400).json({ msn : "El usuario no existe en la base de datos"});
     }
   });
 });

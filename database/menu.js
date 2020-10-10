@@ -10,9 +10,7 @@ var menusSchema = Schema({
     precio:{
         type: Number     
     },
-    descripcion:{
-        type: String
-    },
+    descripcion: String,
     fecha: {
         type: Date,
         default: new Date()

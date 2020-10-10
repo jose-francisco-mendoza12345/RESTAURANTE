@@ -10,25 +10,19 @@ var ordenSchema = new Schema({
        type: Schema.Types.ObjectId,
        ref: "Restaurant"
     },
-    cantidad: {
-       type: Number
-    }, 
+    cantidad: Number, 
     cliente: {
        type: Schema.Types.ObjectId,
        ref: "Cliente"
     },
-    precio: {
-       type: Number
-    },
+    precio: Number,
     Fecha_Registro:
     {
       type:Date,
       default: Date.now()
 
     },
-    pagototal: {
-        type: Number
-    },
+    pagototal: Number,
 });
 
 var orden = mongoose.model("Orden", ordenSchema);

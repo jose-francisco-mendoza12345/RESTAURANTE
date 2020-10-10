@@ -1,5 +1,6 @@
 var mongoose = require("./connect");
-const Schema = mongoose.Schema;
+var mon = require('mongoose');
+var Schema = mon.Schema;
 
 var clienteSchema = new Schema({
   nombre : String,
@@ -11,6 +12,8 @@ var clienteSchema = new Schema({
       type: Date,
       default: Date.now()
   }
+  tipo : String
 });
+
 var cliente = mongoose.model("Cliente", clienteSchema);
 module.exports = cliente;

@@ -1,19 +1,18 @@
-var mongoose = require("../connect");
-const Schema = mongoose.Schema;
+var mongoose = require("./connect");
 
-var usersSchema =  Schema({
+var usersSchema =new mongoose.Schema({
     Nombre:  {
         type: String,
         required: [true, 'Debe poner un nombre']
     },
     Ci: String,
     Telefono: Number,
-    Email:{
+    email:{
         type: String,
         required: 'Falta el Email',
         match: /^(([^<>()\[\]\.,;:\s @\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
     },
-    Password:{
+    password:{
         type: String,
         required: [true, "El password es necesario"],
     }, 

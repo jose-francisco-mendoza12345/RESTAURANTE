@@ -7,4 +7,5 @@ db.on("error", () => {
 db.on("open", () => {
     console.log("Conexion exitosa");
 });
+
 module.exports = mongoose;

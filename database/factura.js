@@ -14,5 +14,5 @@ var detalleSchema = new Schema({
   cantidad: Number,
   precio : Number 
 });
-var detalle = mongoose.model("Detalle", detalleSchema);
-module.exports = detalle;
+var factura = mongoose.model("Factura", detalleSchema);
+module.exports = factura;

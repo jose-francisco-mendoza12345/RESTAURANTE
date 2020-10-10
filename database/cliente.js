@@ -11,7 +11,7 @@ var clienteSchema = new Schema({
   Fecha_Registro: {
       type: Date,
       default: Date.now()
-  }
+  },
   tipo : String
 });
 

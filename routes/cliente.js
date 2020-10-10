@@ -11,7 +11,7 @@ router.post("/cliente",  (req, res) => {
   obj["telefono"]=datos.telefono;
   obj["email"]=datos.email;
   obj["password"]=datos.password;
-  //obj["tipo"]=datos.tipo;
+  obj["tipo"]=datos.tipo;
   var guardando=new Cliente(obj);  
   guardando.save().then(() => {  
     res.status(200).json({"mns" : "Cliente Registrado"});

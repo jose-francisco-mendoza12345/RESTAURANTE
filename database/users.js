@@ -1,26 +1,27 @@
 var mongoose = require("./connect");
-
-var usersSchema =new mongoose.Schema({
-    Nombre:  {
+var USERSCHEMA = new mongoose.Schema({
+    nick: String,
+    age: Number,
+    tipo: String,
+    email: {
         type: String,
-        required: [true, 'Debe poner un nombre']
+        required: [true, "El email es necesario"],
+        validate: {
+            validator: (value) => {
+                return /^[\w\.]+@[\w\.]+\.\w{3,3}$/.test(value);
+            },
+            message: props => `${props.value} no es valido`
+        }
+        
     },
-    Ci: String,
-    Telefono: Number,
-    email:{
-        type: String,
-        required: 'Falta el Email',
-        match: /^(([^<>()\[\]\.,;:\s @\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i,
-    },
-    password:{
+    password: {
         type: String,
         required: [true, "El password es necesario"],
-    }, 
-    Fecha_Registro: {
-        type: Date,
-        default: Date.now()
     },
-    TipoUsuario : String
+    create: {
+        type: Date,
+        default: new Date()
+    }
 });
-const users = mongoose.model('Users', usersSchema);
-module.exports = users;
+var USER = mongoose.model("user", USERSCHEMA);
+module.exports = USER;

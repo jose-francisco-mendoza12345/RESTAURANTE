@@ -8,7 +8,7 @@ var cookieParser = require('cookie-parser');
 var restaurantRouter = require('./routes/restaurant');   //---->link para restaurant
 var menuRouter = require('./routes/menu');   //---->link para menu
 var ordenesRouter = require('./routes/orden');   //---->link para ordenes
-var facturaRouter = require('./routes/factura');
+//var facturaRouter = require('./routes/factura');
 var clienteRouter = require('./routes/cliente');
 var userRouter = require('./routes/user');
 
@@ -28,7 +28,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/1.0', restaurantRouter);  //---->link para restaurant
 app.use('/api/1.0', menuRouter);  //---->link para menu
 app.use('/api/1.0', ordenesRouter);  //---->link para ordenes
-app.use('/api/1.0', facturaRouter); 
+//app.use('/api/1.0', facturaRouter); 
 app.use('/api/1.0', clienteRouter); 
 app.use('/api/1.0', userRouter);
 

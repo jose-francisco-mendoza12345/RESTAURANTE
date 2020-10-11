@@ -3,6 +3,7 @@ var sha1 = require("sha1");
 var USER = require("../database/users");
 var router = express.Router();
 var jwt = require("jsonwebtoken");
+var  midleware = require("./midleware");
 
 //POST
 router.post("/user", (req, res) => {
@@ -50,7 +51,7 @@ router.post("/user", (req, res) => {
     })
 });
 // GET Users
-router.get('/user', (req, res) => {
+router.get('/user', midleware, (req, res) => {
     var params = req.query;
     var limit = 100;
     if (params.limit != null) {
@@ -118,10 +119,17 @@ router.post("/login", async(req, res) => {
         return;
     }
     var results = await USER.find({nick: body.nick, password: sha1(body.password)});
+    console.log(results);
     if (results.length == 1) {
-        res.status(200).json({msn: "Bienvenido " + body.nick + " al sistema"});
+        var token = jwt.sign({
+            exp: Math.floor(Date.now() / 1000) + (60*60),
+            data: results[0].id
+        },'restaurant');
+
+        res.status(200).json({msn: "Bienvenido " + body.nick + " al sistema", token: token});
         return;
     }
     res.status(200).json({msn: "Credenciales incorrectas"});
 });
+//AdshbfdA&123 ->john
 module.exports = router

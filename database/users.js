@@ -1,8 +1,12 @@
 var mongoose = require("./connect");
 var USERSCHEMA = new mongoose.Schema({
     nick: String,
-    age: Number,
+    edad: Number,
     tipo: String,
+    roles: {
+        type: Array,
+        default: []
+    },
     email: {
         type: String,
         required: [true, "El email es necesario"],

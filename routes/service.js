@@ -3,9 +3,14 @@ var sha1 = require('sha1');
 var router = express.Router();
 var fileupload = require('express-fileupload')
 var Restaurant  = require("../database/restaurant");
+var Menus  = require("../database/menu");
+var Orden  = require("../database/orden");
 router.use(fileupload({
     fileSize: 50 * 1024 * 1024
 }));
+/*
+ RESTAURANT
+*/
 //POST
 router.post("/restaurante", (req, res) => {
   var Logo = req.files.logo;
@@ -165,6 +170,189 @@ router.delete("/restaurante", (req, res) => {
         return;
     }
     Restaurant.remove({nit: params.nit}, (err, docs) => {
+        if (err) {
+            res.status(500).json({msn: "Existen problemas en la base de datos"});
+             return;
+         } 
+         res.status(200).json(docs);
+    });
+});
+/*
+ MENU
+*/
+//POST
+router.post("/menu", (req, res) => {
+ 
+  var FotoProducto = req.files.fotoProducto;
+   console.log(req.files.fotoProducto);
+  var path = __dirname.replace(/\/routes/g, "/Imagenes/Menu");
+  var date = new Date();
+  var sing  = sha1(date.toString()).substr(1, 5);
+  var totalpath = path + "/" + sing + "_" + FotoProducto.name.replace(/\s/g,"_");
+  FotoProducto.mv(totalpath, async(err) => {
+        if (err) {
+            return res.status(500).send({msn : "Error al escribir el archivo en el disco duro"});
+        }
+  });
+  var datos = req.body;
+  var obj = {};
+  obj["nombre"] = datos.nombre;
+  obj["precio"] = datos.nit;
+  obj["descripcion"] = datos.propietario;
+  obj["fecha"] = datos.fecha;
+  obj["fotoProducto"] = totalpath;
+  obj["hash"] = sha1(totalpath);
+  obj["relativepath"] = "/api/1.0/sendfile/?id=" + obj["hash"]
+  var menu = new Menus(obj);
+  menu.save((err, docs) => {
+    if (err) {
+         res.status(500).json({msn: "ERROR "})
+           return;
+    }
+    res.status(200).json({msn: "Restaurante Registrado"}); 
+  });
+});
+
+router.get("/getfile", async(req, res, next) => {
+    var params = req.query;
+    if (params == null) {
+        res.status(300).json({ msn: "Error es necesario un ID"});
+        return;
+    }
+    var id = params.id;
+    var menu =  await Menus.find({hash: id});
+    if (menu.length > 0) {
+        var path = menu[0].fotoProducto;
+        res.sendFile(path);
+        return;
+    }
+    res.status(300).json({
+        msn: "Error en la petición"
+    });
+    return;
+});
+//GET
+router.get("/menu", async(req, res) => {
+    var filterdata = req.query;
+    var filterarray = ["nombre", "precio"];
+    var nombre = filterdata["nombre"];
+    var precio = filterdata["precio"];
+    var filter = {};
+    if (nombre != null) {
+        filter["nombre"] = new RegExp(nombre, "g");
+    }
+    if (precio != null) {
+        filter["precio"] = precio;
+    }
+    var limit = 100;
+    var skip = 0;
+    if (filterdata["limit"]) {
+        limit = parseInt(filterdata["limit"]);
+    }
+    if (filterdata["skip"]) {
+        skip = parseInt(filterdata["skip"]);
+    }
+    var docs = await Menus.find(filter).limit(limit).skip(skip);
+    res.status(200).json(docs);
+});
+//PUT
+router.put("/menu", async(req, res) => {
+    var params = req.query;
+    var bodydata = req.body;
+    if (params.nit == null) {
+        res.status(300).json({msn: "El parámetro NIT es necesario"});
+        return;
+    }
+    var allowkeylist = ["nombre","descripcio","precio"];
+    var keys = Object.keys(bodydata);
+    var updateobjectdata = {};
+    for (var i = 0; i < keys.length; i++) {
+        if (allowkeylist.indexOf(keys[i]) > -1) {
+            updateobjectdata[keys[i]] = bodydata[keys[i]];
+        }
+    }
+    Menus.update({_id:  params.id}, {$set: updateobjectdata}, (err, docs) => {
+       if (err) {
+           res.status(500).json({msn: "Existen problemas en la base de datos"});
+            return;
+        } 
+       res.status(200).json(docs);
+       return;
+    });
+});
+//DELETE
+router.delete("/menu", (req, res) => {
+    var params = req.query;
+    if (params.id == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
+        return;
+    }
+    Menus.remove({_id: params.id}, (err, docs) => {
+        if (err) {
+            res.status(500).json({msn: "Existen problemas en la base de datos"});
+             return;
+         } 
+         res.status(200).json(docs);
+    });
+});
+/*
+ ORDEN
+*/
+//GET 
+router.get("/orden", (req, res, next) =>{
+  Orden.find({}).populate("menus").populate("restaurant").populate("cliente").exec((error, docs) => {
+    res.status(200).json(docs);
+  });
+});
+
+//POST
+router.post("/orden",  (req, res) => {
+  var datos=req.body;
+  var obj={};
+  obj["menus"]=datos.menus;
+  obj["restaurant"]=datos.restaurant;
+  obj["cantidad"]=datos.cantidad;
+  obj["cliente"]=datos.cliente;
+  obj["precio"]=datos.precio;
+  obj["pagototal"]=datos.pagototal;
+  var guardando=new Orden(obj);  
+  guardando.save().then(() => {  
+    res.status(200).json({"mns" : "Orden Registrado"});
+  });
+ });
+//PUT
+router.put("/orden", async(req, res) => {
+    var params = req.query;
+    var bodydata = req.body;
+    if (params.id == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
+        return;
+    }
+    var allowkeylist = ["precio","cantidad"];
+    var keys = Object.keys(bodydata);
+    var updateobjectdata = {};
+    for (var i = 0; i < keys.length; i++) {
+        if (allowkeylist.indexOf(keys[i]) > -1) {
+            updateobjectdata[keys[i]] = bodydata[keys[i]];
+        }
+    }
+    Orden.update({_id:  params.id}, {$set: updateobjectdata}, (err, docs) => {
+       if (err) {
+           res.status(500).json({msn: "Existen problemas en la base de datos"});
+            return;
+        } 
+       res.status(200).json(docs);
+       return;
+    });
+});
+//DELETE
+router.delete("/orden", (req, res) => {
+    var params = req.query;
+    if (params.id == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
+        return;
+    }
+    Orden.remove({_id: params.id}, (err, docs) => {
         if (err) {
             res.status(500).json({msn: "Existen problemas en la base de datos"});
              return;

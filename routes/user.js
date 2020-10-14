@@ -52,6 +52,21 @@ router.post("/user", (req, res) => {
     })
 });
 // GET Users
+router.get('/user2', (req, res) => {
+    var params = req.query;
+    var limit = 100;
+    if (params.limit != null) {
+        limit = parseInt(params.limit);
+    } 
+    var skip = 0;
+    if (params.skip != null) {
+        skip = parseInt(params.skip);
+    }
+    USER.find({}).limit(limit).skip(skip).exec((err, docs) => {
+        res.status(200).json(docs);
+    console.log('mostrando users');
+    });
+});
 router.get('/user', midleware, (req, res) => {
     var params = req.query;
     var limit = 100;
@@ -111,7 +126,7 @@ router.delete("/user", async(req,res) => {
 //LOGIN
 router.post("/login", async(req, res) => {
     var body = req.body;
-    if (body.nick == null) {
+    if (body.email == null) {
         res.status(300).json({msn: "El nick es necesario"});
              return;
     }
@@ -119,7 +134,7 @@ router.post("/login", async(req, res) => {
         res.status(300).json({msn: "El password es necesario"});
         return;
     }
-    var results = await USER.find({nick: body.nick, password: sha1(body.password)});
+    var results = await USER.find({email: body.email, password: sha1(body.password)});
     console.log(results);
     if (results.length == 1) {
         var token = jwt.sign({
@@ -127,7 +142,7 @@ router.post("/login", async(req, res) => {
             data: results[0].id
         },'restaurant');
 
-        res.status(200).json({msn: "Bienvenido " + body.nick + " al sistema", token: token});
+        res.status(200).json({msn: "Bienvenido " + body.email + " al sistema", token: token});
         return;
     }
     res.status(200).json({msn: "Credenciales incorrectas"});

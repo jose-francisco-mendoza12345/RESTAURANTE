@@ -2,27 +2,28 @@ var mongoose = require("./connect");
 const Schema = mongoose.Schema;
 
 var ordenSchema = new Schema({
-    menus : {
-       type: Schema.Types.ObjectId,
-       ref: "Menus"
+    cliente: {
+      type: Schema.Types.ObjectId,
+      ref: "Cliente"
     },
     restaurant:{
        type: Schema.Types.ObjectId,
        ref: "Restaurant"
     },
-    cantidad: Number, 
-    cliente: {
+    menu : {
        type: Schema.Types.ObjectId,
-       ref: "Cliente"
+       ref: "Menu"
     },
+    lugarEnvio: String,
     precio: Number,
+    cantidad :Number,
+    pagototal: Number,
     Fecha_Registro:
     {
       type:Date,
       default: Date.now()
 
     },
-    pagototal: Number,
 });
 
 var orden = mongoose.model("Orden", ordenSchema);

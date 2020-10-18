@@ -1,12 +1,9 @@
 var mongoose = require("./connect");
 var USERSCHEMA = new mongoose.Schema({
-    nick: String,
-    edad: Number,
+    nombre: String,
+    ci: Number,
+    telefono: Number,
     tipo: String,
-    roles: {
-        type: Array,
-        default: []
-    },
     email: {
         type: String,
         required: [true, "El email es necesario"],
@@ -22,7 +19,11 @@ var USERSCHEMA = new mongoose.Schema({
         type: String,
         required: [true, "El password es necesario"],
     },
-    create: {
+    roles: {
+        type: Array,
+        default: []
+    },
+    fecha: {
         type: Date,
         default: new Date()
     }

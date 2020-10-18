@@ -1,6 +1,7 @@
 var mongoose = require("./connect");
-var mon = require('mongoose');
-var Schema = mon.Schema;
+const Schema = mongoose.Schema;
+
+
 var menusSchema =new Schema({
     nombre: String,
     precio: Number,
@@ -8,8 +9,7 @@ var menusSchema =new Schema({
     fecha: {
         type: Date,
         default: new Date()
-    },
-    
+    },  
     relativepath: {
         type: String
     },
@@ -20,9 +20,13 @@ var menusSchema =new Schema({
     hash: {
         type: String,
         required: [true, "la ruta de la imagen es necesaria"]
+    },
+    restaurant:{
+       type: Schema.Types.ObjectId,
+       ref: "Restaurant"
     }
     
 });
 
-var menus = mongoose.model("Menus", menusSchema);
+var menus = mongoose.model("Menu", menusSchema);
 module.exports = menus;

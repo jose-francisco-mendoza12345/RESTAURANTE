@@ -8,7 +8,6 @@ var cookieParser = require('cookie-parser');
 var serviceRouter = require('./routes/service');   //---->link service
 var userRouter = require('./routes/user');//---->link user
 
-
 var app = express();
 
 // view engine setup

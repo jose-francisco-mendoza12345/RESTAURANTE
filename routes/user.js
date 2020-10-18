@@ -4,10 +4,41 @@ var USER = require("../database/users");
 var Cliente  = require("../database/cliente");
 var router = express.Router();
 var jwt = require("jsonwebtoken");
-var  midleware = require("./midleware");
+var midleware = require("./midleware");
 
+//LOGIN
+//Propietario->Pedro@gmail.com->Pedro#123
+//Cliente->Sam@gmail.com->Sam#123
+
+router.post("/login", async(req, res) => {
+    var body = req.body;
+    if (body.email == null) {
+        res.status(300).json({msn: "El email es necesario"});
+             return;
+    }
+    if (body.password == null) {
+        res.status(300).json({msn: "El password es necesario"});
+        return;
+    }
+    var results = await Cliente.find({email: body.email, password: sha1(body.password)});
+    if (results.length == 1) {
+        var token = jwt.sign({
+            exp: Math.floor(Date.now() / 1000) + (60*60),
+            data: results[0].id
+        },'Proyectkeysecret');
+
+        res.status(200).json({msn: "Bienvenido " + body.email + " al sistema", token: token});
+        return;
+    }
+    
+    res.status(200).json({msn: "Credenciales incorrectas"});
+});
+
+/*
+ USUARIO PARA REGISTRAR RESTAURANTE
+*/
 //POST
-router.post("/user", (req, res) => {
+router.post("/user", midleware, (req, res) => {
     var userRest = req.body;
     var params = req.body;
     if (params.password == null) {
@@ -27,13 +58,6 @@ router.post("/user", (req, res) => {
         res.status(300).json({msn: "Necesita un caracter especial"});
         return;
     }
-    if(params.tipo != null){
-        params["tipo"] = "propietario";
-        console.log("se registro propietario");
-    }else{
-        params["tipo"] = "cliente";
-        console.log("se registro cliente");
-    }
     params.password = sha1(params.password);
     var userDB = new USER(params);
     userDB.save((err, docs) => {
@@ -52,21 +76,6 @@ router.post("/user", (req, res) => {
     })
 });
 // GET Users
-router.get('/user2', (req, res) => {
-    var params = req.query;
-    var limit = 100;
-    if (params.limit != null) {
-        limit = parseInt(params.limit);
-    } 
-    var skip = 0;
-    if (params.skip != null) {
-        skip = parseInt(params.skip);
-    }
-    USER.find({}).limit(limit).skip(skip).exec((err, docs) => {
-        res.status(200).json(docs);
-    console.log('mostrando users');
-    });
-});
 router.get('/user', midleware, (req, res) => {
     var params = req.query;
     var limit = 100;
@@ -83,14 +92,14 @@ router.get('/user', midleware, (req, res) => {
     });
 });
 //PUT
-router.put("/user", async(req, res) => {
+router.put("/user", midleware, async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    var allowkeylist = ["nick", "email", "age"];
+    var allowkeylist = ["nombre", "telefono"];
     var keys = Object.keys(bodydata);
     var updateobjectdata = {};
     for (var i = 0; i < keys.length; i++) {
@@ -109,7 +118,7 @@ router.put("/user", async(req, res) => {
 
 });
 // DELETE User 
-router.delete("/user", async(req,res) => {
+router.delete("/user", midleware, async(req,res) => {
     var id = req.query.id;
     console.log(req.query.id);
     if (id == null) {
@@ -122,53 +131,50 @@ router.delete("/user", async(req,res) => {
     res.status(200).json(result);
     console.log('user deleted');
   });
-
-//LOGIN
-router.post("/login", async(req, res) => {
-    var body = req.body;
-    if (body.email == null) {
-        res.status(300).json({msn: "El nick es necesario"});
-             return;
-    }
-    if (body.password == null) {
-        res.status(300).json({msn: "El password es necesario"});
-        return;
-    }
-    var results = await USER.find({email: body.email, password: sha1(body.password)});
-    console.log(results);
-    if (results.length == 1) {
-        var token = jwt.sign({
-            exp: Math.floor(Date.now() / 1000) + (60*60),
-            data: results[0].id
-        },'restaurant');
-
-        res.status(200).json({msn: "Bienvenido " + body.email + " al sistema", token: token});
-        return;
-    }
-    res.status(200).json({msn: "Credenciales incorrectas"});
-});
-//AdshbfdA&123 ->john
 /*
  CLIENTE
 */
 //POST
-router.post("/cliente",  (req, res) => {
-  var datos=req.body;
-  var obj={};
-  obj["nombre"]=datos.nombre;
-  obj["ci"]=datos.ci;
-  obj["telefono"]=datos.telefono;
-  obj["email"]=datos.email;
-  obj["password"]=datos.password;
-  obj["tipo"]=datos.tipo;
-  var guardando=new Cliente(obj);  
-  guardando.save().then(() => {  
-    res.status(200).json({"mns" : "Cliente Registrado"});
-  });
- });
+router.post("/cliente", midleware, (req, res) => {
+    var clienteRest = req.body;
+    var params = req.body;
+    if (params.password == null) {
+        res.status(300).json({msn: "El password es necesario para continuar con el registro"});
+        return;
+    }
+    if (params.password.length < 6) {
+        res.status(300).json({msn: "Es demasiado corto"});
+        return;
+    }
+    if (!/[A-Z]+/.test(params.password)) {
+        res.status(300).json({msn: "El password necesita una letra Mayuscula"});
+        
+        return;
+    }
+    if (!/[\$\^\@\&\(\)\{\}\#]+/.test(params.password)) {
+        res.status(300).json({msn: "Necesita un caracter especial"});
+        return;
+    }
+    params.password = sha1(params.password);
+    var cliente = new Cliente (params);
+    cliente.save((err, docs) => {
+        if (err) {
+            var errors = err.errors;
+            var keys = Object.keys(errors);
+            var msn = {};
+            for (var i = 0; i < keys.length; i++) {
+                msn[keys[i]] = errors[keys[i]].message;
+            }
+            res.status(500).json(msn);
+            return;
+        }
+        res.status(200).json(docs);
+        return;
+    })
+});
 
 //GET
-router.get("/cliente",(req, res) => {
+router.get("/cliente", midleware, (req, res) => {
   var skip = 0;
   var limit = 10;
   if (req.query.skip != null) {
@@ -192,14 +198,14 @@ router.get("/cliente",(req, res) => {
 });
 
 //PUT
-router.put("/cliente", async(req, res) => {
+router.put("/cliente", midleware, async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    var allowkeylist = ["nombre","telefono","email","tipo"];
+    var allowkeylist = ["nombre","calle","telefono"];
     var keys = Object.keys(bodydata);
     var updateobjectdata = {};
     for (var i = 0; i < keys.length; i++) {
@@ -219,7 +225,7 @@ router.put("/cliente", async(req, res) => {
 
 
 //DELETE
-router.delete("/cliente", (req, res) => {
+router.delete("/cliente", midleware, (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});

@@ -2,17 +2,22 @@ var express = require('express');
 var sha1 = require('sha1');
 var router = express.Router();
 var fileupload = require('express-fileupload')
+var jwt = require("jsonwebtoken");
+
 var Restaurant  = require("../database/restaurant");
-var Menus  = require("../database/menu");
+var Menu  = require("../database/menu");
 var Orden  = require("../database/orden");
+var midleware = require("./midleware");
+
 router.use(fileupload({
     fileSize: 50 * 1024 * 1024
 }));
+
 /*
  RESTAURANT
 */
 //POST
-router.post("/restaurante", (req, res) => {
+router.post("/restaurant", midleware, (req, res) => {
   var Logo = req.files.logo;
   var FotoLugar = req.files.fotoLugar;
   var path1 = __dirname.replace(/\/routes/g, "/Imagenes/Restaurant/Logo");
@@ -57,18 +62,14 @@ router.post("/restaurante", (req, res) => {
   });
 });
 //GET
-router.get("/restaurante", async(req, res) => {
+router.get("/restaurant", midleware, async(req, res) => {
     var filterdata = req.query;
-    var filterarray = ["nombre","nit","calle"];
+    var filterarray = ["nombre","calle"];
     var nombre = filterdata["nombre"];
-    var nit = filterdata["nit"];
     var calle = filterdata["calle"];
     var filter = {};
     if (nombre != null) {
         filter["nombre"] = new RegExp(nombre, "g");
-    }
-    if (nit != null) {
-        filter["nit"] = nit;
     }
     if (calle != null) {
         filter["calle"] = calle;
@@ -90,8 +91,8 @@ router.get("/logo", async(req, res, next) => {
         res.status(300).json({ msn: "Error es necesario un ID"});
         return;
     }
-    var nit = params.nit;
-    var restaurante =  await Restaurant.find({hash1: nit});
+    var id = params.id;
+    var restaurante =  await Restaurant.find({hash1: id});
     if (restaurante.length > 0) {
         var path = restaurante[0].logo;
         res.sendFile(path);
@@ -108,8 +109,8 @@ router.get("/fotoLugar", async(req, res, next) => {
         res.status(300).json({ msn: "Error es necesario un ID"});
         return;
     }
-    var nit = params.nit;
-    var restaurante =  await Restaurant.find({hash2: nit});
+    var id = params.id;
+    var restaurante =  await Restaurant.find({hash2: id});
     if (restaurante.length > 0) {
         var path = restaurante[0].fotoLugar;
         res.sendFile(path);
@@ -121,11 +122,11 @@ router.get("/fotoLugar", async(req, res, next) => {
     return;
 });
 //PUT
-router.put("/restaurante", async(req, res) => {
+router.put("/restaurant", midleware, async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
-    if (params.nit == null) {
-        res.status(300).json({msn: "El parámetro NIT es necesario"});
+    if (params.id == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
     var allowkeylist = ["nombre","propietario","calle","telefono","lat","lng"];
@@ -136,7 +137,7 @@ router.put("/restaurante", async(req, res) => {
             updateobjectdata[keys[i]] = bodydata[keys[i]];
         }
     }
-    Restaurant.update({nit:  params.nit}, {$set: updateobjectdata}, (err, docs) => {
+    Restaurant.update({_id:  params.id}, {$set: updateobjectdata}, (err, docs) => {
        if (err) {
            res.status(500).json({msn: "Existen problemas en la base de datos"});
             return;
@@ -146,7 +147,7 @@ router.put("/restaurante", async(req, res) => {
     });
 });
 //PATCH ->Solo por elementos
-router.patch("/restaurante", async(req, res) => {
+router.patch("/restaurant", midleware, async(req, res) => {
     if(req.query.id == null) {
         res.status(300).json({msn: "Error no existe id"});
         return;
@@ -163,13 +164,13 @@ router.patch("/restaurante", async(req, res) => {
     });
 });
 //DELETE
-router.delete("/restaurante", (req, res) => {
+router.delete("/restaurant", midleware, (req, res) => {
     var params = req.query;
-    if (params.nit == null) {
+    if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    Restaurant.remove({nit: params.nit}, (err, docs) => {
+    Restaurant.remove({_id: params.id}, (err, docs) => {
         if (err) {
             res.status(500).json({msn: "Existen problemas en la base de datos"});
              return;
@@ -181,8 +182,7 @@ router.delete("/restaurante", (req, res) => {
  MENU
 */
 //POST
-router.post("/menu", (req, res) => {
- 
+router.post("/menu", midleware, (req, res) => {
   var FotoProducto = req.files.fotoProducto;
    console.log(req.files.fotoProducto);
   var path = __dirname.replace(/\/routes/g, "/Imagenes/Menu");
@@ -202,8 +202,9 @@ router.post("/menu", (req, res) => {
   obj["fecha"] = datos.fecha;
   obj["fotoProducto"] = totalpath;
   obj["hash"] = sha1(totalpath);
-  obj["relativepath"] = "/api/1.0/sendfile/?id=" + obj["hash"]
-  var menu = new Menus(obj);
+  obj["relativepath"] = "/api/1.0/fotoProducto/?id=" + obj["hash"];
+  obj["restaurant"]=datos.restaurant
+  var menu = new Menu(obj);
   menu.save((err, docs) => {
     if (err) {
          res.status(500).json({msn: "ERROR "})
@@ -213,26 +214,8 @@ router.post("/menu", (req, res) => {
   });
 });
 
-router.get("/getfile", async(req, res, next) => {
-    var params = req.query;
-    if (params == null) {
-        res.status(300).json({ msn: "Error es necesario un ID"});
-        return;
-    }
-    var id = params.id;
-    var menu =  await Menus.find({hash: id});
-    if (menu.length > 0) {
-        var path = menu[0].fotoProducto;
-        res.sendFile(path);
-        return;
-    }
-    res.status(300).json({
-        msn: "Error en la petición"
-    });
-    return;
-});
 //GET
-router.get("/menu", async(req, res) => {
+router.get("/menu", midleware, async(req, res) => {
     var filterdata = req.query;
     var filterarray = ["nombre", "precio"];
     var nombre = filterdata["nombre"];
@@ -252,18 +235,36 @@ router.get("/menu", async(req, res) => {
     if (filterdata["skip"]) {
         skip = parseInt(filterdata["skip"]);
     }
-    var docs = await Menus.find(filter).limit(limit).skip(skip);
+    var docs = await Menu.find(filter).limit(limit).skip(skip).populate("restaurant");
     res.status(200).json(docs);
 });
-//PUT
-router.put("/menu", async(req, res) => {
+router.get("/fotoProducto", async(req, res, next) => {
     var params = req.query;
-    var bodydata = req.body;
-    if (params.nit == null) {
-        res.status(300).json({msn: "El parámetro NIT es necesario"});
+    if (params == null) {
+        res.status(300).json({ msn: "Error es necesario un ID"});
         return;
     }
-    var allowkeylist = ["nombre","descripcio","precio"];
+    var id = params.id;
+    var menu =  await Menu.find({hash: id});
+    if (menu.length > 0) {
+        var path = menu[0].fotoProducto;
+        res.sendFile(path);
+        return;
+    }
+    res.status(300).json({
+        msn: "Error en la petición"
+    });
+    return;
+});
+//PUT
+router.put("/menu", midleware, async(req, res) => {
+    var params = req.query;
+    var bodydata = req.body;
+    if (params.id == null) {
+        res.status(300).json({msn: "El parámetro ID es necesario"});
+        return;
+    }
+    var allowkeylist = ["nombre","descripcion","precio"];
     var keys = Object.keys(bodydata);
     var updateobjectdata = {};
     for (var i = 0; i < keys.length; i++) {
@@ -271,7 +272,7 @@ router.put("/menu", async(req, res) => {
             updateobjectdata[keys[i]] = bodydata[keys[i]];
         }
     }
-    Menus.update({_id:  params.id}, {$set: updateobjectdata}, (err, docs) => {
+    Menu.update({_id:  params.id}, {$set: updateobjectdata}, (err, docs) => {
        if (err) {
            res.status(500).json({msn: "Existen problemas en la base de datos"});
             return;
@@ -280,14 +281,15 @@ router.put("/menu", async(req, res) => {
        return;
     });
 });
+
 //DELETE
-router.delete("/menu", (req, res) => {
+router.delete("/menu", midleware, (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    Menus.remove({_id: params.id}, (err, docs) => {
+    Menu.remove({_id: params.id}, (err, docs) => {
         if (err) {
             res.status(500).json({msn: "Existen problemas en la base de datos"});
              return;
@@ -298,37 +300,37 @@ router.delete("/menu", (req, res) => {
 /*
  ORDEN
 */
-//GET 
-router.get("/orden", (req, res, next) =>{
-  Orden.find({}).populate("menus").populate("restaurant").populate("cliente").exec((error, docs) => {
-    res.status(200).json(docs);
-  });
-});
-
 //POST
-router.post("/orden",  (req, res) => {
+router.post("/orden", midleware, (req, res) => {
   var datos=req.body;
   var obj={};
-  obj["menus"]=datos.menus;
-  obj["restaurant"]=datos.restaurant;
-  obj["cantidad"]=datos.cantidad;
   obj["cliente"]=datos.cliente;
+  obj["restaurant"]=datos.restaurant;
+  obj["menu"]=datos.menu;
+  obj["lugarEnvio"]=datos.menu;
   obj["precio"]=datos.precio;
+  obj["cantidad"]=datos.cantidad;
   obj["pagototal"]=datos.pagototal;
   var guardando=new Orden(obj);  
   guardando.save().then(() => {  
     res.status(200).json({"mns" : "Orden Registrado"});
   });
  });
+//GET 
+router.get("/orden", midleware, (req, res, next) =>{
+  Orden.find({}).populate("cliente").populate("restaurant").populate("menu").exec((error, docs) => {
+    res.status(200).json(docs);
+  });
+});
 //PUT
-router.put("/orden", async(req, res) => {
+router.put("/orden", midleware, async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    var allowkeylist = ["precio","cantidad"];
+    var allowkeylist = ["lugarEnvio","cantidad"];
     var keys = Object.keys(bodydata);
     var updateobjectdata = {};
     for (var i = 0; i < keys.length; i++) {
@@ -346,7 +348,7 @@ router.put("/orden", async(req, res) => {
     });
 });
 //DELETE
-router.delete("/orden", (req, res) => {
+router.delete("/orden", midleware, (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
@@ -360,4 +362,5 @@ router.delete("/orden", (req, res) => {
          res.status(200).json(docs);
     });
 });
-module.exports = router
+
+module.exports = router;

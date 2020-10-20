@@ -21,6 +21,7 @@ router.post("/login", async(req, res) => {
         return;
     }
     var results = await Cliente.find({email: body.email, password: sha1(body.password)});
+    var results1 = await USER.find({email: body.email, password: sha1(body.password)});
     if (results.length == 1) {
         var token = jwt.sign({
             exp: Math.floor(Date.now() / 1000) + (60*60),
@@ -30,7 +31,6 @@ router.post("/login", async(req, res) => {
         res.status(200).json({msn: "Bienvenido " + body.email + " al sistema", token: token});
         return;
     }
-    
     res.status(200).json({msn: "Credenciales incorrectas"});
 });
 
@@ -135,7 +135,7 @@ router.delete("/user", midleware, async(req,res) => {
  CLIENTE
 */
 //POST
-router.post("/cliente", midleware, (req, res) => {
+router.post("/cliente", (req, res) => {
     var clienteRest = req.body;
     var params = req.body;
     if (params.password == null) {
@@ -174,7 +174,7 @@ router.post("/cliente", midleware, (req, res) => {
 });
 
 //GET
-router.get("/cliente", midleware, (req, res) => {
+router.get("/cliente",  (req, res) => {
   var skip = 0;
   var limit = 10;
   if (req.query.skip != null) {
@@ -198,7 +198,7 @@ router.get("/cliente", midleware, (req, res) => {
 });
 
 //PUT
-router.put("/cliente", midleware, async(req, res) => {
+router.put("/cliente",  async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
@@ -225,7 +225,7 @@ router.put("/cliente", midleware, async(req, res) => {
 
 
 //DELETE
-router.delete("/cliente", midleware, (req, res) => {
+router.delete("/cliente",  (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});

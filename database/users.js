@@ -28,5 +28,5 @@ var USERSCHEMA = new mongoose.Schema({
         default: new Date()
     }
 });
-var USER = mongoose.model("user", USERSCHEMA);
+var USER = mongoose.model("User", USERSCHEMA);
 module.exports = USER;

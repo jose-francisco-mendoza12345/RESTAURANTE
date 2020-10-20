@@ -17,7 +17,7 @@ router.use(fileupload({
  RESTAURANT
 */
 //POST
-router.post("/restaurant", midleware, (req, res) => {
+router.post("/restaurant",  (req, res) => {
   var Logo = req.files.logo;
   var FotoLugar = req.files.fotoLugar;
   var path1 = __dirname.replace(/\/routes/g, "/Imagenes/Restaurant/Logo");
@@ -62,7 +62,7 @@ router.post("/restaurant", midleware, (req, res) => {
   });
 });
 //GET
-router.get("/restaurant", midleware, async(req, res) => {
+router.get("/restaurant",  async(req, res) => {
     var filterdata = req.query;
     var filterarray = ["nombre","calle"];
     var nombre = filterdata["nombre"];
@@ -122,7 +122,7 @@ router.get("/fotoLugar", async(req, res, next) => {
     return;
 });
 //PUT
-router.put("/restaurant", midleware, async(req, res) => {
+router.put("/restaurant",  async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
@@ -147,7 +147,7 @@ router.put("/restaurant", midleware, async(req, res) => {
     });
 });
 //PATCH ->Solo por elementos
-router.patch("/restaurant", midleware, async(req, res) => {
+router.patch("/restaurant",  async(req, res) => {
     if(req.query.id == null) {
         res.status(300).json({msn: "Error no existe id"});
         return;
@@ -164,7 +164,7 @@ router.patch("/restaurant", midleware, async(req, res) => {
     });
 });
 //DELETE
-router.delete("/restaurant", midleware, (req, res) => {
+router.delete("/restaurant",  (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
@@ -182,7 +182,7 @@ router.delete("/restaurant", midleware, (req, res) => {
  MENU
 */
 //POST
-router.post("/menu", midleware, (req, res) => {
+router.post("/menu",  (req, res) => {
   var FotoProducto = req.files.fotoProducto;
    console.log(req.files.fotoProducto);
   var path = __dirname.replace(/\/routes/g, "/Imagenes/Menu");
@@ -215,7 +215,7 @@ router.post("/menu", midleware, (req, res) => {
 });
 
 //GET
-router.get("/menu", midleware, async(req, res) => {
+router.get("/menu",  async(req, res) => {
     var filterdata = req.query;
     var filterarray = ["nombre", "precio"];
     var nombre = filterdata["nombre"];
@@ -257,7 +257,7 @@ router.get("/fotoProducto", async(req, res, next) => {
     return;
 });
 //PUT
-router.put("/menu", midleware, async(req, res) => {
+router.put("/menu",  async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
@@ -283,7 +283,7 @@ router.put("/menu", midleware, async(req, res) => {
 });
 
 //DELETE
-router.delete("/menu", midleware, (req, res) => {
+router.delete("/menu",  (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
@@ -301,7 +301,7 @@ router.delete("/menu", midleware, (req, res) => {
  ORDEN
 */
 //POST
-router.post("/orden", midleware, (req, res) => {
+router.post("/orden",  (req, res) => {
   var datos=req.body;
   var obj={};
   obj["cliente"]=datos.cliente;
@@ -317,20 +317,20 @@ router.post("/orden", midleware, (req, res) => {
   });
  });
 //GET 
-router.get("/orden", midleware, (req, res, next) =>{
+router.get("/orden",  (req, res, next) =>{
   Orden.find({}).populate("cliente").populate("restaurant").populate("menu").exec((error, docs) => {
     res.status(200).json(docs);
   });
 });
 //PUT
-router.put("/orden", midleware, async(req, res) => {
+router.put("/orden", async(req, res) => {
     var params = req.query;
     var bodydata = req.body;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});
         return;
     }
-    var allowkeylist = ["lugarEnvio","cantidad"];
+    var allowkeylist = ["lugarEnvio","cantidad","cliente"];
     var keys = Object.keys(bodydata);
     var updateobjectdata = {};
     for (var i = 0; i < keys.length; i++) {
@@ -348,7 +348,7 @@ router.put("/orden", midleware, async(req, res) => {
     });
 });
 //DELETE
-router.delete("/orden", midleware, (req, res) => {
+router.delete("/orden", (req, res) => {
     var params = req.query;
     if (params.id == null) {
         res.status(300).json({msn: "El parámetro ID es necesario"});

@@ -1,14 +1,39 @@
 var jwt = require("jsonwebtoken");
 var USER = require("../database/users");
-var Cliente  = require("../database/cliente");
 
-var  midleware = async(req, res, next) => {
+var  midleware = (req, res, next) => {
   //recuperar del header el token 
  var token = req.headers["authorization"];
  if(token == null){
      res.status(403).json({error:" no tienes acceso a este lugar token, token null "});
      return;
- }
+  }
+  // verificar si token es valido o no 
+  try{
+      var decoded = jwt.verify(token, 'Proyectkeysecret');
+      // verificacion del tiempo de sesion
+      if(Date.now() / 1000 > decoded.exp ){
+        res.status(403).json({error:"el tiempo del  token ya expiro"});
+        return;
+      }
+      if(decoded == null) {
+         res.status(403).json({error:"no tienes acceso al token "});
+         return;
+      } else {
+             next();
+             return;
+      }
+     
+  } catch (TokenExpiredError) {
+         res.status(403).json({error:"El token ya expiro"});
+        return;
+  } 
+
+}
+
+
+/*
+
  // verificar si token es valido o no 
  try{
   var decoded = jwt.verify(token, 'Proyectkeysecret');
@@ -22,8 +47,8 @@ var  midleware = async(req, res, next) => {
    return;
   }
   // verifica donde ira el usuario en la la base de datos 
-  var idcliente = decoded.data;
-  var docs = await Cliente.findOne({_id: idcliente});
+  var iduser = decoded.data;
+  var docs = await USER.findOne({_id: iduser});
   if(docs==null){
      res.status(403).json({error:"no tienes acceso, el cliente no existe en la BD"});
      return;
@@ -49,5 +74,5 @@ var  midleware = async(req, res, next) => {
      res.status(403).json({error:"El token ya expiro"});
      return;
    } 
-}
+}*/
 module.exports = midleware;

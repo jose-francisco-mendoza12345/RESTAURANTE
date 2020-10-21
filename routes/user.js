@@ -36,52 +36,49 @@ router.post("/login", async(req, res) => {
 */
 //POST
 router.post("/user",  (req, res) => {
-    var userRest = req.body;
     var params = req.body;
     if (params.password == null) {
-        res.status(300).json({msn: "El password es necesario pra continuar con el registro"});
+        res.status(200).json({msn: "El password es necesario pra continuar con el registro"});
         return;
     }
     if (params.password.length < 6) {
-        res.status(300).json({msn: "Es demasiado corto"});
+        res.status(200).json({msn: "Es demasiado corto"});
         return;
     }
     if (!/[A-Z]+/.test(params.password)) {
-        res.status(300).json({msn: "El password necesita una letra Mayuscula"});
+        res.status(200).json({msn: "El password necesita una letra Mayuscula"});
         
         return;
     }
     if (!/[\$\^\@\&\(\)\{\}\#]+/.test(params.password)) {
-        res.status(300).json({msn: "Necesita un caracter especial"});
+        res.status(200).json({msn: "Necesita un caracter especial"});
         return;
     }
-    params.password = sha1(params.password);
-    if(params.tipo != null){
+    if(params.tipo == "propietario"){
         params["tipo"] = "propietario";
         console.log("se registro propietario");
     }else{
         params["tipo"] = "cliente";
         console.log("se registro cliente");
     }
-
-    var userDB = new USER(params);
-    userDB.save((err, docs) => {
-        if (err) {
-            var errors = err.errors;
-            var keys = Object.keys(errors);
-            var msn = {};
-            for (var i = 0; i < keys.length; i++) {
-                msn[keys[i]] = errors[keys[i]].message;
-            }
-            res.status(500).json(msn);
+   
+    USER.find({email: params.email}).exec( async(err, docs) => {
+        if(err){
+           res.status(500).json({msn: "Existen problemas en la base de datos"});
             return;
+        }else{
+            params.password = sha1(params.password);
+            params["registerdate"] = new Date();
+            var users = new USER(params);
+            var result = await users.save();
+            res.status(200).json(result);
+            console.log('user registrado');
         }
-        res.status(200).json(docs);
-        return;
-    })
+    });   
 });
+
 // GET Users
-router.get('/user', midleware, (req, res) => {
+router.get('/user',  (req, res) => {
     var params = req.query;
     var limit = 100;
     if (params.limit != null) {

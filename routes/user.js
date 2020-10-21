@@ -64,7 +64,7 @@ router.post("/user",  (req, res) => {
    
     USER.find({email: params.email}).exec( async(err, docs) => {
         if(err){
-           res.status(500).json({msn: "Existen problemas en la base de datos"});
+           res.status(500).json({msn: "El usuario ya existe"});
             return;
         }else{
             params.password = sha1(params.password);

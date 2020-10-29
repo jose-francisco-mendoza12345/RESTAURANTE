@@ -3,6 +3,10 @@ var sha1 = require('sha1');
 var router = express.Router();
 var fileupload = require('express-fileupload')
 var jwt = require("jsonwebtoken");
+var fs = require('fs');
+var _ = require("underscore"); 
+const PDFDocument = require('pdfkit');
+var nodemailer = require('nodemailer');
 
 var Restaurant  = require("../database/restaurant");
 var Menu  = require("../database/menu");
@@ -62,7 +66,7 @@ router.post("/restaurant",  (req, res) => {
   });
 });
 //GET
-router.get("/restaurant",  async(req, res) => {
+router.get("/restaurant",midleware,  async(req, res) => {
     var filterdata = req.query;
     var filterarray = ["nombre","calle"];
     var nombre = filterdata["nombre"];
@@ -215,7 +219,7 @@ router.post("/menu",  (req, res) => {
 });
 
 //GET
-router.get("/menu",  async(req, res) => {
+router.get("/menu",midleware,  async(req, res) => {
     var filterdata = req.query;
     var filterarray = ["nombre", "precio"];
     var nombre = filterdata["nombre"];
@@ -362,5 +366,119 @@ router.delete("/orden", (req, res) => {
          res.status(200).json(docs);
     });
 });
+/*
+ FACTURA
+*/
+router.get("/facturas/:id", (req, res, next) => { 
+      Orden.findById(req.params.id).populate("restaurant").populate("menu").populate("cliente").exec().then(doc => {
+            // Crear un documento
+            pdf = new PDFDocument;
+            var idOrden = req.params.id;
+            var writeStream = fs.createWriteStream(idOrden + '.pdf');
+            pdf.pipe(writeStream);
 
+            pdf
+               .fontSize(20)
+               .text('Id de Factura:' + idOrden, 100, 100)
+               .moveDown();
+            pdf
+               .fontSize(12)
+               .text('Nombre o Razon Social:' + doc.cliente.nombre, { width: 412, align: 'left'}) 
+               .moveDown();
+            pdf.text('Cedula de Indentidad' + doc.cliente.ci, { width: 412, align: 'left' })
+               .moveDown();
+            pdf.text('telefono :  ' + doc.cliente.telefono, { width: 412, align: 'left' })
+               .moveDown();
+            pdf.text('DETALLE DE PEDIDO', { width: 412, align: 'center'})
+               .moveDown();
+            pdf.text('Restaurant:' + doc.restaurant.nombre, { width: 412, align: 'left'})
+               .moveDown();
+            pdf.text('nit : ' + doc.restaurant.nit, { width: 412, align: 'left'})
+               .moveDown();
+            pdf.text('direccion:' + doc.restaurant.calle, { width: 412, align: 'left'})
+               .moveDown();
+            pdf.text('telefono:' + doc.restaurant.telefono, { width: 412, align: 'left' })
+               .moveDown();
+            pdf
+               .image('mandalorian.jpg', pdf.x, pdf.y, { width: 300 })
+               .text('nombre \n precio \n cantidad', { width: 412, height: 15, columns: 3, align: 'left'})
+            pdf.moveTo(95, pdf.y)
+               .lineTo(510, pdf.y).stroke()
+            pdf.moveDown();
+
+            console.log(pdf.x, pdf.y);
+            pdf.rect(pdf.x - 5, pdf.y, 410, doc.menu.length * 20).stroke()
+
+            for (var i = 0; i < doc.menu.length; i++) {
+                pdf.text(doc.menu[i].nombre + '\n' + doc.menu[i].precio + '\n' + doc.cantidad[i], {
+                    width: 412,
+                    align: 'left',
+                    height: 15,
+                    columns: 3
+                })
+                pdf.moveDown();
+            }
+
+            pdf.text('total:' + doc.pagototal, {width: 412, align: 'right'})
+            pdf.moveDown();
+
+            pdf.text('Fecha de venta:' + doc.Fecha_Registro.toString(), { width: 412, align: 'center'})
+            pdf.moveDown();
+            // Finalizar archivo PDF
+            pdf.end();    
+      });
+      //definimos el transporter
+      var transporter = nodemailer.createTransport({
+          service: 'gmail',
+          secure: false,
+          port: 25,
+          auth: {
+                  user: 'pedro@gmail.com', 
+                  pass: '',//se pone la password
+                },
+          tls: {
+                    rejectUnauthorized: false
+               }
+      });
+      // Definimos el email
+      var mailOptions = {
+          from: 'Api Rest',
+          to: 'pedro@gmail.com',
+          subject: 'Factura por servicio',
+          text: 'Adjuntamos la factura por servicio de comidas',
+          attachments: [{ path: "./" + idOrden + ".pdf"}]
+      };
+      writeStream.on('finish', function (){
+           // Enviamos el email
+           transporter.sendMail(mailOptions, function (error, info) {
+           if (error){
+                     console.log(error);
+                     res.status(500).json({msn: "error"});
+           }else{
+                 pdf = new PDFDocument;
+                 var writeStreamG = fs.createWriteStream(idOrden + '.pdf');
+                 pdf.pipe(writeStreamG);
+
+                 pdf
+                    .fontSize(20)
+                    .text('Id de  : ' + idOrden, 100, 100)
+                    .moveDown();
+
+                 pdf
+                    .fontSize(12)
+                    .text('Nombre o Razon Social:' + doc.cliente.nombre, { width: 412, align: 'left'})
+                    .image('mandalorian.jpg', pdf.x, pdf.y, { width: 300 })
+               pdfg.end()
+
+               writeStreamG.on('finish', function () {
+                     res.status(200).download('./' + idOrden + '.pdf');
+               });
+                     console.log('Email sent');
+           }   
+          });
+    
+      }).catch(error => {
+            res.status(500).json({msn: "error"});
+      });
+});
 module.exports = router;

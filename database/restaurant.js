@@ -31,7 +31,6 @@ var restaurantSchema = new Schema({
     },
     logo: {
         type: String,
-        default: "None data",
         required: [true, "la ruta de la imagen es necesaria"]
     },
     hash1: {
@@ -43,7 +42,6 @@ var restaurantSchema = new Schema({
     },
     fotoLugar: {
         type: String,
-        default: "None data",
         required: [true, "la ruta de la imagen es necesaria"]
     },
     hash2: {

@@ -15,7 +15,6 @@ var menusSchema =new Schema({
     },
     fotoProducto: {
         type: String,
-        default: "None data",
         required: [true, "la ruta de la canción es necesaria"]
     },
     hash: {
